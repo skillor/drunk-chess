@@ -1,0 +1,4 @@
+<div #chessboard class="chessboard" [class.hide-spare]="!gameService.settings.allowSpawn"></div>
+<div *ngIf="gameService.settings.allowTrash" style="position: relative;"><div id="offboard-trash" class="trash"><img src="assets/chesspieces/trash.svg"></div></div>
+<div>{{gameEnded ? (game.isDraw() ? 'draw' : (game.turn() == 'b' ? 'White won' : 'Black won')) : (game.turn() == 'w' ? 'White\'s turn' : 'Black\'s turn')}}</div>
+<button class="btn btn-primary" (click)="quit()">Quit</button>

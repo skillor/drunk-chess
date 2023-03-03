@@ -27,12 +27,19 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "*",
+                "input": "node_modules/stockfish.js",
+                "output": "assets/stockfish.js/"
+              }
             ],
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.js"
+            ]
           },
           "configurations": {
             "production": {
