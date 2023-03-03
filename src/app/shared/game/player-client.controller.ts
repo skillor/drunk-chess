@@ -33,6 +33,7 @@ export class PlayerClientController extends Controller {
     if (!legal) {
       return 'snapback';
     }
+    game.load(fen);
     this.moveResolve();
   }
 

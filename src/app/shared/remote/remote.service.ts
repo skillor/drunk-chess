@@ -99,7 +99,7 @@ export class RemoteService {
   }
 
   handleData(data: any, conn: DataConnection) {
-    console.log('got', conn.connectionId, data);
+    // console.log('got', conn.connectionId, data);
     if (data !== Object(data)) return;
     if (!data.type) return;
     const handler = this.eventListeners[data.type];
@@ -120,9 +120,9 @@ export class RemoteService {
   }
 
   send(conn: DataConnection | undefined, type: string, data: any): boolean {
-    console.log('wanna send', conn, type, data);
+    // console.log('wanna send', conn, type, data);
     if (!conn?.open) return false;
-    console.log('send', conn, type, data);
+    // console.log('send', conn, type, data);
     conn.send({type, data});
     return true;
   }
