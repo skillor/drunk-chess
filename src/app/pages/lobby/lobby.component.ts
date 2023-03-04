@@ -1,6 +1,7 @@
 import { Component, NgZone, OnDestroy, } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { AudioService } from 'src/app/shared/audio/audio.service';
 import { GameController } from 'src/app/shared/game/game.controller';
 import { GameService } from 'src/app/shared/game/game.service';
 import { PlayerClientController } from 'src/app/shared/game/player-client.controller';
@@ -37,6 +38,7 @@ export class LobbyComponent implements OnDestroy {
     route: ActivatedRoute,
     public gameService: GameService,
     public remoteService: RemoteService,
+    private audioService: AudioService,
     private zone: NgZone,
   ) {
     this.routeSub = route.paramMap.subscribe(async (params) => {
@@ -57,15 +59,15 @@ export class LobbyComponent implements OnDestroy {
           this.remoteService.on('start', (white) => {
             if (white) {
               this.gameService.gameController = new GameController(
-                new PlayerClientController(this.remoteService),
-                new WaitClientController(this.remoteService),
-                'white',
+                new PlayerClientController(this.remoteService, this.gameService, this.audioService),
+                new WaitClientController(this.remoteService, this.gameService, this.audioService),
+                'w',
               );
             } else {
               this.gameService.gameController = new GameController(
-                new WaitClientController(this.remoteService),
-                new PlayerClientController(this.remoteService),
-                'black',
+                new WaitClientController(this.remoteService, this.gameService, this.audioService),
+                new PlayerClientController(this.remoteService, this.gameService, this.audioService),
+                'b',
               );
             }
             this.play();
@@ -105,15 +107,15 @@ export class LobbyComponent implements OnDestroy {
     const meWhite = Math.random() > 0.5;
     if (meWhite) {
       this.gameService.gameController = new GameController(
-        new PlayerHostController(this.gameService, this.remoteService),
-        new WaitHostController(this.gameService, this.remoteService),
-        'white',
+        new PlayerHostController(this.remoteService, this.gameService, this.audioService),
+        new WaitHostController(this.remoteService, this.gameService, this.audioService),
+        'w',
       );
     } else {
       this.gameService.gameController = new GameController(
-        new WaitHostController(this.gameService, this.remoteService),
-        new PlayerHostController(this.gameService, this.remoteService),
-        'black',
+        new WaitHostController(this.remoteService, this.gameService, this.audioService),
+        new PlayerHostController(this.remoteService, this.gameService, this.audioService),
+        'b',
       );
     }
     this.remoteService.broadcast('start', !meWhite);

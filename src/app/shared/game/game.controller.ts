@@ -1,4 +1,5 @@
 import { Chess } from "chess.js";
+import { AudioController } from "./audio.controller";
 import { Board } from "./board.model";
 import { Controller } from "./controller";
 
@@ -9,15 +10,23 @@ export class GameController extends Controller {
   }
 
   constructor(
-    private white: Controller,
-    private black: Controller,
-    public defaultOrientation: 'white' | 'black' = 'white') {
+    private white: AudioController,
+    private black: AudioController,
+    pov: 'w' | 'b' = 'w',
+  ) {
     super();
+    this.pov = pov;
+    white.pov = pov;
+    black.pov = pov;
   }
 
-  override async makeMove(game: Chess, board: Board): Promise<void> {
+  getOrientation(): 'white' | 'black' {
+    return this.pov == 'w' ? 'white' : 'black';
+  }
+
+  override async waitMove(game: Chess, board: Board): Promise<void> {
     while (!game.isGameOver()) {
-      await this.getActiveController(game).makeMove(game, board);
+      await this.getActiveController(game).waitMove(game, board);
     }
   }
 

@@ -1,20 +1,25 @@
 import { Chess } from "chess.js";
+import { AudioService } from "../audio/audio.service";
 import { RemoteService } from "../remote/remote.service";
+import { AudioController } from "./audio.controller";
 import { Board } from "./board.model";
-import { Controller } from "./controller";
+import { GameService } from "./game.service";
 
-export class WaitClientController extends Controller {
+export class WaitClientController extends AudioController {
   constructor(
     private remoteService: RemoteService,
+    gameService: GameService,
+    audioService: AudioService,
   ) {
-    super();
+    super(gameService, audioService);
   }
 
-  override makeMove(game: Chess, board: Board): Promise<void> {
+  override waitMove(game: Chess, board: Board): Promise<void> {
     return new Promise((resolve) => {
-      this.remoteService.on('position', (fen) => {
-        board.position(fen);
+      this.remoteService.on('move', async ({fen, from, to, promotion}) => {
+        await this.makeMove(game, board, from, to, promotion);
         game.load(fen);
+        board.position(fen);
         resolve();
       });
     });

@@ -9,6 +9,7 @@ import { StockfishService } from './shared/stockfish/stockfish.service';
 import { FormsModule } from '@angular/forms';
 import { RemoteService } from './shared/remote/remote.service';
 import { LobbyComponent } from './pages/lobby/lobby.component';
+import { AudioService } from './shared/audio/audio.service';
 
 @NgModule({
   declarations: [
@@ -25,6 +26,7 @@ import { LobbyComponent } from './pages/lobby/lobby.component';
     GameService,
     StockfishService,
     RemoteService,
+    AudioService,
   ],
   bootstrap: [AppComponent]
 })

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Chess, Color, Piece, PieceSymbol, Square, SQUARES } from 'chess.js';
+import { AudioService } from '../audio/audio.service';
 import { StockfishScore, StockfishService } from '../stockfish/stockfish.service';
 import { GameController } from './game.controller';
 import { PlayerController } from './player.controller';
@@ -21,6 +22,7 @@ export class GameService {
 
   constructor(
     private stockfish: StockfishService,
+    private audioService: AudioService,
   ) {
     this.loadSettings();
   }
@@ -54,14 +56,14 @@ export class GameService {
   getController(): GameController {
     if (this.gameController) return this.gameController;
     if (Math.random() > 0.5) return new GameController(
-      new RandomController(this),
-      new PlayerController(this),
-      'black'
+      new RandomController(this, this.audioService),
+      new PlayerController(this, this.audioService),
+      'b',
     );
     return new GameController(
-      new PlayerController(this),
-      new RandomController(this),
-      'white'
+      new PlayerController(this, this.audioService),
+      new RandomController(this, this.audioService),
+      'w',
     );
   }
 
@@ -98,6 +100,40 @@ export class GameService {
     return true;
   }
 
+  getPieceAt(game: Chess, square: string): Piece | undefined {
+    if (square == 'offboard') return undefined;
+    if (square.startsWith('spare')) return {color: <Color>square[5], type: <PieceSymbol>(square[6].toLowerCase())};
+    const p = game.get(<Square>square);
+    if (!p) return undefined;
+    return p;
+  }
+
+  isCapture(game: Chess, from: string, to: string, promotion: PieceSymbol = 'q'): boolean {
+    return !!this.getPieceAt(game, to);
+  }
+
+  afterMove(game: Chess, from: string, to: string, promotion: PieceSymbol = 'q'): Chess {
+    const g = new Chess(game.fen());
+    this.move(g, from, to, promotion);
+    return g;
+  }
+
+  isCheck(game: Chess, from: string, to: string, promotion: PieceSymbol = 'q'): boolean {
+    return this.afterMove(game, from, to, promotion).inCheck();
+  }
+
+  isStalemate(game: Chess, from: string, to: string, promotion: PieceSymbol = 'q'): boolean {
+    return this.afterMove(game, from, to, promotion).isStalemate();
+  }
+
+  isDraw(game: Chess, from: string, to: string, promotion: PieceSymbol = 'q'): boolean {
+    return this.afterMove(game, from, to, promotion).isDraw();
+  }
+
+  isGameOver(game: Chess, from: string, to: string, promotion: PieceSymbol = 'q'): boolean {
+    return this.afterMove(game, from, to, promotion).isGameOver();
+  }
+
   async calcScore(game: Chess): Promise<StockfishScore> {
     return (await this.stockfish.analyzePosition(game.fen(), this.settings.sfDepth, this.settings.sfWorkers)).score;
   }
@@ -121,7 +157,7 @@ export class GameService {
         square: fromSquare,
         verbose: true,
       }).map(m => m.to);
-      if (this.settings.allowTrash && game.get(fromSquare).type != 'k') toSquares.push('offboard');
+      if (this.settings.allowTrash && piece.type != 'k') toSquares.push('offboard');
     } else {
       if (from[5] != game.turn()) return [];
     }
@@ -131,7 +167,7 @@ export class GameService {
     for (let to of toSquares) {
       if (from == to) continue;
       if (legalTos.includes(to)) continue;
-      if (game.get(<Square>to).type == 'k') continue;
+      if (this.getPieceAt(game, to)?.type == 'k') continue;
       const tg = new Chess(game.fen());
       const legal = this.move(tg, from, to);
       if (!legal) continue;
@@ -158,12 +194,11 @@ export class GameService {
     return t;
   }
 
-  async makeMove(game: Chess, from: string, to: string): Promise<boolean> {
+  async legalMove(game: Chess, from: string, to: string): Promise<boolean> {
     if (from.startsWith('spare') && to == 'offboard') return false;
     if (from == to) return false;
     const legal = await this.legalMoves(game, from);
-    if (legal.includes(to)) {
-      this.move(game, from, to);
+    if (legal.includes(to) && this.move(new Chess(game.fen()), from, to)) {
       this.cachedLegal = {};
       delete this.cacheScore;
       return true;

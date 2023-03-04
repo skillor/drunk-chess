@@ -71,7 +71,7 @@ export class PlayComponent implements AfterViewInit {
     }
 
     const board = Chessboard(nativeElement, {
-      orientation: gameController.defaultOrientation,
+      orientation: gameController.getOrientation(),
       pieceTheme: 'assets/chesspieces/{piece}.svg',
       draggable: true,
       dropOffBoard: 'trash',
@@ -110,7 +110,7 @@ export class PlayComponent implements AfterViewInit {
 
     this.board = board;
     this.game = game;
-    gameController.makeMove(game, board).then(() => this.gameEnded = true).catch(() => {});
+    gameController.waitMove(game, board).then(() => this.gameEnded = true).catch(() => {});
   }
 
   @HostListener('window:resize', ['$event'])

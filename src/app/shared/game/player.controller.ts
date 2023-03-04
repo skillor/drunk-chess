@@ -1,20 +1,33 @@
-import { Chess } from "chess.js";
+import { Chess, PieceSymbol } from "chess.js";
+import { AudioService } from "../audio/audio.service";
+import { AudioController } from "./audio.controller";
 import { Board } from "./board.model";
 import { Controller } from "./controller";
 import { GameService } from "./game.service";
 
-export class PlayerController extends Controller {
+export class PlayerController extends AudioController {
   moveResolve = () => {};
 
   constructor (
-    private gameService: GameService,
+    gameService: GameService,
+    audioService: AudioService,
   ) {
-    super();
+    super(gameService, audioService);
   }
 
-  override makeMove(game: Chess, board: Board): Promise<void> {
+  override async makeMove(game: Chess, board: Board, from: string, to: string, promotion: PieceSymbol): Promise<void> {
+    await super.makeMove(game, board, from, to, promotion);
+    this.gameService.move(game, from, to, promotion);
+    board.position(game.fen());
+  }
+
+  override waitMove(game: Chess, board: Board): Promise<void> {
     board.orientation(game.turn() == 'w' ? 'white' : 'black');
-    return new Promise((resolve) => this.moveResolve = resolve);
+    return new Promise((resolve) => {
+      this.moveResolve = () => {
+        resolve();
+      };
+    });
   }
 
   override onDragStart(game: Chess, board: Board, source: string, piece: string): boolean {
@@ -27,12 +40,14 @@ export class PlayerController extends Controller {
 
   override async onDrop(game: Chess, board: Board, source: string, target: string, piece: string): Promise<string | void> {
     if (source == 'spare') source += piece;
-    const legal = await this.gameService.makeMove(game, source, target);
+    const legal = await this.gameService.legalMove(game, source, target);
     board.removeGreySquares();
-    board.position(game.fen());
     if (!legal) {
+      board.position(game.fen());
+      await this.illegalMove(game, board, source, target, 'q');
       return 'snapback';
     }
+    await this.makeMove(game, board, source, target, 'q');
     this.moveResolve();
   }
 
