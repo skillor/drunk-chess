@@ -6,7 +6,11 @@ describe('RemoteService', () => {
   let service: RemoteService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [
+        RemoteService,
+      ]
+    });
     service = TestBed.inject(RemoteService);
   });
 

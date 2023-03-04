@@ -1,10 +1,8 @@
-import { AfterViewInit, Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, Inject, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Chess } from 'chess.js';
 import { Board } from 'src/app/shared/game/board.model';
 import { GameService } from 'src/app/shared/game/game.service';
-declare const Chessboard: Board;
-declare const $: any;
 
 @Component({
   selector: 'app-play',
@@ -16,6 +14,8 @@ export class PlayComponent implements AfterViewInit {
   chessboard?: ElementRef;
 
   constructor(
+    @Inject('Chessboard') private IChessboard: Board,
+    @Inject('$') private $: any,
     private router: Router,
     public gameService: GameService,
   ) {}
@@ -30,6 +30,7 @@ export class PlayComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     const nativeElement = this.chessboard?.nativeElement;
     const game = new Chess();
+    const $ = this.$;
 
     let dragging = false;
     let lastSquare: string | undefined = undefined;
@@ -70,7 +71,7 @@ export class PlayComponent implements AfterViewInit {
       return gameController.onMouseoutSquare(game, board);
     }
 
-    const board = Chessboard(nativeElement, {
+    const board = this.IChessboard(nativeElement, {
       orientation: gameController.getOrientation(),
       pieceTheme: 'assets/chesspieces/{piece}.svg',
       draggable: true,
