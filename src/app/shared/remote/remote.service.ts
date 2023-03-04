@@ -9,7 +9,7 @@ export class RemoteService {
   peer?: Peer;
   hostConnections: {[key: string]: DataConnection} = {};
   clientConnection?: DataConnection;
-  eventListeners: {[key: string]: (data: any, conn: DataConnection) => void} = {};
+  eventListeners: {[key: string]: (data: any, conn: DataConnection, id?: string) => void} = {};
 
   hasHostConnections(): boolean {
     return Object.keys(this.hostConnections).length > 0;
@@ -103,41 +103,42 @@ export class RemoteService {
     if (data !== Object(data)) return;
     if (!data.type) return;
     const handler = this.eventListeners[data.type];
-    if (handler) handler(data.data, conn);
+    if (handler) handler(data.data, conn, data.id);
   }
 
-  broadcast(type: string, data: any) {
-    if (!this.send(this.clientConnection, type, data)) {
+  broadcast(type: string, data: any, id?: string) {
+    if (!this.send(this.clientConnection, type, data, id)) {
       this.clientConnection?.close();
       delete this.clientConnection;
     }
     for (const connId of Object.keys(this.hostConnections)) {
-      if (!this.send(this.hostConnections[connId], type, data)) {
+      if (!this.send(this.hostConnections[connId], type, data, id)) {
         this.hostConnections[connId].close();
         delete this.hostConnections[connId];
       }
     }
   }
 
-  send(conn: DataConnection | undefined, type: string, data: any): boolean {
+  send(conn: DataConnection | undefined, type: string, data: any, id?: string): boolean {
     // console.log('wanna send', conn, type, data);
     if (!conn?.open) return false;
     // console.log('send', conn, type, data);
-    conn.send({type, data});
+    conn.send({id, type, data});
     return true;
   }
 
-  on(type: string, f: (data: any, conn: DataConnection) => void) {
+  on(type: string, f: (data: any, conn: DataConnection, id?: string) => void) {
     this.eventListeners[type] = f;
   }
 
-  waitForResponse(type: string, data: any, timeout = 1000): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.on(type, (data) => {
-        resolve(data);
+  waitForResponse(type: string, data: any): Promise<any> {
+    const id = Math.random().toString(16).substring(2);
+    return new Promise((resolve) => {
+      this.on(type, (data, conn, rid) => {
+        console.log(type, rid, id);
+        if (rid == id) resolve(data);
       });
-      this.broadcast(type, data);
-      setTimeout(() => reject(), timeout);
+      this.broadcast(type, data, id);
     });
   }
 }

@@ -16,18 +16,21 @@ export class WaitHostController extends AudioController {
 
   override waitMove(game: Chess, board: Board): Promise<void> {
     return new Promise((resolve) => {
-      this.remoteService.on('legalMoves', async ({square}, conn) => {
+      this.remoteService.on('legalMoves', async ({square}, conn, id) => {
         const toSquares = await this.gameService.legalMoves(game, square);
-        this.remoteService.send(conn, 'legalMoves', {toSquares});
+        this.remoteService.send(conn, 'legalMoves', {toSquares}, id);
       });
-      this.remoteService.on('waitMove', async ({source, target, promotion}, conn) => {
+      this.remoteService.on('waitMove', async ({source, target, promotion}, conn, id) => {
         const legal = await this.gameService.legalMove(game, source, target);
         if (!legal) {
-          this.remoteService.send(conn, 'waitMove', {fen: game.fen(), legal});
+          this.remoteService.send(conn, 'waitMove', {fen: game.fen(), legal}, id);
           return;
         }
         await this.makeMove(game, board, source, target, promotion);
-        this.remoteService.send(conn, 'waitMove', {fen: game.fen(), legal});
+        this.gameService.move(game, source, target, promotion);
+        const fen = game.fen();
+        this.remoteService.send(conn, 'waitMove', {fen, legal}, id);
+        board.position(fen);
         resolve();
       });
     });

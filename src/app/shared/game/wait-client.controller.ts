@@ -17,9 +17,10 @@ export class WaitClientController extends AudioController {
   override waitMove(game: Chess, board: Board): Promise<void> {
     return new Promise((resolve) => {
       this.remoteService.on('move', async ({fen, from, to, promotion}) => {
-        await this.makeMove(game, board, from, to, promotion);
         game.load(fen);
-        board.position(fen);
+        await this.makeMove(game, board, from, to, promotion);
+        this.gameService.move(game, from, to, promotion);
+        board.position(game.fen());
         resolve();
       });
     });

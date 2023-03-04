@@ -52,9 +52,9 @@ export class LobbyComponent implements OnDestroy {
             // reliable: true,
           });
           this.lobbyId = id;
-          this.remoteService.on('settings', (settings, conn) => {
+          this.remoteService.on('settings', (settings, conn, id) => {
             this.gameService.settings = settings;
-            this.remoteService.send(conn, 'settings', true);
+            this.remoteService.send(conn, 'settings', true, id);
           });
           this.remoteService.on('start', (white) => {
             if (white) {
