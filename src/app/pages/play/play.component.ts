@@ -3,11 +3,17 @@ import { Router } from '@angular/router';
 import { Chess } from 'chess.js';
 import { Board } from 'src/app/shared/game/board.model';
 import { GameService } from 'src/app/shared/game/game.service';
+declare const Chessboard: Board;
+declare const $: any;
 
 @Component({
   selector: 'app-play',
   templateUrl: './play.component.html',
-  styleUrls: ['./play.component.scss']
+  styleUrls: ['./play.component.scss'],
+  providers: [
+    { provide: 'Chessboard', useValue: Chessboard },
+    { provide: '$', useValue: $ },
+  ]
 })
 export class PlayComponent implements AfterViewInit {
   @ViewChild('chessboard')
